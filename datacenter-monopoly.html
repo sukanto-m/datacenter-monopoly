@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Center Tycoon - Monopoly</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        .board-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .board {
+            width: 700px;
+            height: 700px;
+            background: #1a1f3a;
+            border: 3px solid #00ff88;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .property {
+            position: absolute;
+            background: #0f1420;
+            border: 2px solid #00ff88;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .property:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+        }
+
+        .property-header {
+            padding: 3px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .property-name {
+            padding: 5px;
+            text-align: center;
+            font-size: 9px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e0e0e0;
+        }
+
+        .property-price {
+            padding: 3px;
+            text-align: center;
+            font-size: 8px;
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        /* Corner properties */
+        .corner {
+            width: 100px;
+            height: 100px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: #2a2f4a;
+            color: #00ff88;
+        }
+
+        /* Bottom row */
+        .bottom {
+            width: 75px;
+            height: 100px;
+            bottom: 0;
+        }
+
+        /* Left column */
+        .left {
+            width: 100px;
+            height: 75px;
+            left: 0;
+            flex-direction: row;
+        }
+
+        .left .property-header {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            width: 20px;
+        }
+
+        .left .property-name {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+        }
+
+        .left .property-price {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            width: 20px;
+        }
+
+        /* Top row */
+        .top {
+            width: 75px;
+            height: 100px;
+            top: 0;
+        }
+
+        /* Right column */
+        .right {
+            width: 100px;
+            height: 75px;
+            right: 0;
+            flex-direction: row-reverse;
+        }
+
+        .right .property-header {
+            writing-mode: vertical-lr;
+            width: 20px;
+        }
+
+        .right .property-name {
+            writing-mode: vertical-lr;
+        }
+
+        .right .property-price {
+            writing-mode: vertical-lr;
+            width: 20px;
+        }
+
+        /* Player tokens */
+        .player-token {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            transition: all 0.5s;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* Info panel */
+        .info-panel {
+            width: 350px;
+            background: rgba(26, 31, 58, 0.9);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .player-info {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .player-info.current {
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .player-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #00ff88;
+        }
+
+        .player-money {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .player-properties {
+            font-size: 11px;
+            margin-top: 8px;
+            color: #b0b0b0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .dice-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .die {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid #00ff88;
+            padding-left: 10px;
+        }
+
+        .property-owned {
+            opacity: 0.7;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1f3a;
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-text {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .server-count {
+            display: inline-block;
+            margin-left: 5px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="board-section">
+            <div class="board" id="board"></div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>⚡ Data Center Tycoon ⚡</h2>
+            
+            <div id="players-info"></div>
+            
+            <div class="dice-container">
+                <div class="die" id="die1">?</div>
+                <div class="die" id="die2">?</div>
+            </div>
+            
+            <button id="roll-btn">Roll Dice</button>
+            <button id="buy-btn" style="display:none;">Purchase Property</button>
+            <button id="upgrade-btn" style="display:none;">Add Servers ($200)</button>
+            <button id="end-turn-btn" style="display:none;">End Turn</button>
+            
+            <div class="log" id="game-log"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="property-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">Property Details</div>
+            <div class="modal-text" id="modal-text"></div>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const properties = [
+            { name: "START", type: "corner", text: "Collect $200\nPassing GO" },
+            { name: "Edge Node\nSeattle", color: "#8B4513", price: 60, rent: [2, 10, 30, 90, 160, 250], group: 1 },
+            { name: "Network\nOutage", type: "special", text: "Community\nChest" },
+            { name: "Edge Node\nPortland", color: "#8B4513", price: 60, rent: [4, 20, 60, 180, 320, 450], group: 1 },
+            { name: "Bandwidth\nTax", type: "special", text: "Pay $200\nBandwidth Fee" },
+            { name: "Tier-1\nProvider", type: "utility", price: 200 },
+            { name: "Colocation\nChicago", color: "#87CEEB", price: 100, rent: [6, 30, 90, 270, 400, 550], group: 2 },
+            { name: "Latency\nSpike", type: "special", text: "Chance" },
+            { name: "Colocation\nAshburn", color: "#87CEEB", price: 100, rent: [6, 30, 90, 270, 400, 550], group: 2 },
+            { name: "Colocation\nDallas", color: "#87CEEB", price: 120, rent: [8, 40, 100, 300, 450, 600], group: 2 },
+            
+            { name: "DDOS\nATTACK", type: "corner", text: "Just\nVisiting" },
+            { name: "AWS\nus-east-1", color: "#FF69B4", price: 140, rent: [10, 50, 150, 450, 625, 750], group: 3 },
+            { name: "Power Grid", type: "utility", price: 150 },
+            { name: "AWS\nus-west-2", color: "#FF69B4", price: 140, rent: [10, 50, 150, 450, 625, 750], group: 3 },
+            { name: "AWS\neu-west-1", color: "#FF69B4", price: 160, rent: [12, 60, 180, 500, 700, 900], group: 3 },
+            { name: "Tier-2\nProvider", type: "utility", price: 200 },
+            { name: "Azure\nEast US", color: "#FFA500", price: 180, rent: [14, 70, 200, 550, 750, 950], group: 4 },
+            { name: "Network\nOutage", type: "special", text: "Community\nChest" },
+            { name: "Azure\nWest US", color: "#FFA500", price: 180, rent: [14, 70, 200, 550, 750, 950], group: 4 },
+            { name: "Azure\nNorth EU", color: "#FFA500", price: 200, rent: [16, 80, 220, 600, 800, 1000], group: 4 },
+            
+            { name: "FREE\nCDN", type: "corner", text: "Free\nParking" },
+            { name: "GCP\nus-central1", color: "#FF0000", price: 220, rent: [18, 90, 250, 700, 875, 1050], group: 5 },
+            { name: "Latency\nSpike", type: "special", text: "Chance" },
+            { name: "GCP\nus-west1", color: "#FF0000", price: 220, rent: [18, 90, 250, 700, 875, 1050], group: 5 },
+            { name: "GCP\neurope-west1", color: "#FF0000", price: 240, rent: [20, 100, 300, 750, 925, 1100], group: 5 },
+            { name: "Tier-3\nProvider", type: "utility", price: 200 },
+            { name: "Hyperscale\nSingapore", color: "#FFFF00", price: 260, rent: [22, 110, 330, 800, 975, 1150], group: 6 },
+            { name: "Hyperscale\nTokyo", color: "#FFFF00", price: 260, rent: [22, 110, 330, 800, 975, 1150], group: 6 },
+            { name: "Cooling\nSystem", type: "utility", price: 150 },
+            { name: "Hyperscale\nSydney", color: "#FFFF00", price: 280, rent: [24, 120, 360, 850, 1025, 1200], group: 6 },
+            
+            { name: "RANSOMWARE", type: "corner", text: "Go To\nDDoS Attack" },
+            { name: "Quantum DC\nZurich", color: "#00FF00", price: 300, rent: [26, 130, 390, 900, 1100, 1275], group: 7 },
+            { name: "Quantum DC\nAmsterdam", color: "#00FF00", price: 300, rent: [26, 130, 390, 900, 1100, 1275], group: 7 },
+            { name: "Network\nOutage", type: "special", text: "Community\nChest" },
+            { name: "Quantum DC\nFrankfurt", color: "#00FF00", price: 320, rent: [28, 150, 450, 1000, 1200, 1400], group: 7 },
+            { name: "Fiber Link", type: "utility", price: 200 },
+            { name: "Latency\nSpike", type: "special", text: "Chance" },
+            { name: "AI Cluster\nLondon", color: "#0000FF", price: 350, rent: [35, 175, 500, 1100, 1300, 1500], group: 8 },
+            { name: "Compliance\nFine", type: "special", text: "Pay $100\nGDPR Fine" },
+            { name: "AI Cluster\nParis", color: "#0000FF", price: 400, rent: [50, 200, 600, 1400, 1700, 2000], group: 8 },
+        ];
+
+        class Game {
+            constructor() {
+                this.players = [
+                    { name: "Player 1", money: 1500, position: 0, color: "#00ff88", properties: [], inJail: false },
+                    { name: "Player 2", money: 1500, position: 0, color: "#ff00ff", properties: [], inJail: false }
+                ];
+                this.currentPlayer = 0;
+                this.gameLog = [];
+                this.hasRolled = false;
+                this.initBoard();
+                this.updateUI();
+            }
+
+            initBoard() {
+                const board = document.getElementById('board');
+                
+                // Position calculations
+                const positions = [
+                    // Bottom row (0-10)
+                    { left: 600, bottom: 0 }, // START
+                    { left: 525, bottom: 0 },
+                    { left: 450, bottom: 0 },
+                    { left: 375, bottom: 0 },
+                    { left: 300, bottom: 0 },
+                    { left: 225, bottom: 0 },
+                    { left: 150, bottom: 0 },
+                    { left: 75, bottom: 0 },
+                    { left: 0, bottom: 0 },
+                    { left: 0, bottom: 0 },
+                    { left: 0, bottom: 0 }, // Jail corner
+                    
+                    // Left column (11-20)
+                    { left: 0, bottom: 100 },
+                    { left: 0, bottom: 175 },
+                    { left: 0, bottom: 250 },
+                    { left: 0, bottom: 325 },
+                    { left: 0, bottom: 400 },
+                    { left: 0, bottom: 475 },
+                    { left: 0, bottom: 550 },
+                    { left: 0, bottom: 625 },
+                    { left: 0, bottom: 700 },
+                    { left: 0, bottom: 600 }, // Free parking
+                    
+                    // Top row (21-30)
+                    { left: 100, top: 0 },
+                    { left: 175, top: 0 },
+                    { left: 250, top: 0 },
+                    { left: 325, top: 0 },
+                    { left: 400, top: 0 },
+                    { left: 475, top: 0 },
+                    { left: 550, top: 0 },
+                    { left: 625, top: 0 },
+                    { left: 700, top: 0 },
+                    { left: 600, top: 0 }, // Go to jail
+                    
+                    // Right column (31-39)
+                    { right: 0, top: 100 },
+                    { right: 0, top: 175 },
+                    { right: 0, top: 250 },
+                    { right: 0, top: 325 },
+                    { right: 0, top: 400 },
+                    { right: 0, top: 475 },
+                    { right: 0, top: 550 },
+                    { right: 0, top: 625 },
+                    { right: 0, top: 700 }
+                ];
+
+                properties.forEach((prop, index) => {
+                    const div = document.createElement('div');
+                    let className = 'property';
+                    
+                    if (prop.type === 'corner') {
+                        className += ' corner';
+                    } else if (index <= 10) {
+                        className += ' bottom';
+                    } else if (index <= 20) {
+                        className += ' left';
+                    } else if (index <= 30) {
+                        className += ' top';
+                    } else {
+                        className += ' right';
+                    }
+                    
+                    div.className = className;
+                    div.dataset.index = index;
+                    
+                    // Apply positioning
+                    const pos = positions[index];
+                    Object.keys(pos).forEach(key => {
+                        div.style[key] = pos[key] + 'px';
+                    });
+                    
+                    if (prop.type === 'corner' || prop.type === 'special') {
+                        div.innerHTML = `<div style="padding: 10px;">${prop.text || prop.name}</div>`;
+                    } else if (prop.type === 'utility') {
+                        div.innerHTML = `
+                            <div class="property-name">${prop.name}</div>
+                            <div class="property-price">$${prop.price}</div>
+                        `;
+                    } else {
+                        div.innerHTML = `
+                            <div class="property-header" style="background: ${prop.color};">${prop.group ? 'Region ' + prop.group : ''}</div>
+                            <div class="property-name">${prop.name}<span class="server-count" data-index="${index}"></span></div>
+                            <div class="property-price">$${prop.price}</div>
+                        `;
+                    }
+                    
+                    div.onclick = () => this.showPropertyInfo(index);
+                    board.appendChild(div);
+                });
+
+                // Add player tokens
+                this.players.forEach((player, i) => {
+                    const token = document.createElement('div');
+                    token.className = 'player-token';
+                    token.style.background = player.color;
+                    token.textContent = i + 1;
+                    token.id = `player-${i}`;
+                    board.appendChild(token);
+                    this.updatePlayerPosition(i);
+                });
+            }
+
+            updatePlayerPosition(playerIndex) {
+                const player = this.players[playerIndex];
+                const token = document.getElementById(`player-${playerIndex}`);
+                const property = document.querySelector(`[data-index="${player.position}"]`);
+                
+                const rect = property.getBoundingClientRect();
+                const boardRect = document.getElementById('board').getBoundingClientRect();
+                
+                token.style.left = (rect.left - boardRect.left + rect.width / 2 - 10 + (playerIndex * 15)) + 'px';
+                token.style.top = (rect.top - boardRect.top + rect.height / 2 - 10) + 'px';
+            }
+
+            rollDice() {
+                if (this.hasRolled) return;
+                
+                const die1 = Math.floor(Math.random() * 6) + 1;
+                const die2 = Math.floor(Math.random() * 6) + 1;
+                const total = die1 + die2;
+                
+                document.getElementById('die1').textContent = die1;
+                document.getElementById('die2').textContent = die2;
+                
+                const player = this.players[this.currentPlayer];
+                player.position = (player.position + total) % 40;
+                
+                this.addLog(`${player.name} rolled ${die1} + ${die2} = ${total}`);
+                this.updatePlayerPosition(this.currentPlayer);
+                
+                this.hasRolled = true;
+                this.handleLanding();
+                this.updateUI();
+            }
+
+            handleLanding() {
+                const player = this.players[this.currentPlayer];
+                const property = properties[player.position];
+                
+                if (!property.type || property.type === 'utility') {
+                    if (!property.owner) {
+                        this.addLog(`${player.name} landed on ${property.name} (Available for $${property.price})`);
+                        document.getElementById('buy-btn').style.display = 'block';
+                    } else if (property.owner !== this.currentPlayer) {
+                        const rent = this.calculateRent(player.position);
+                        player.money -= rent;
+                        this.players[property.owner].money += rent;
+                        this.addLog(`${player.name} paid $${rent} rent to ${this.players[property.owner].name}`);
+                    } else {
+                        this.addLog(`${player.name} landed on their own property`);
+                        if (property.group && (!property.servers || property.servers < 5)) {
+                            document.getElementById('upgrade-btn').style.display = 'block';
+                        }
+                    }
+                } else if (property.type === 'special') {
+                    this.addLog(`${player.name} landed on ${property.name}`);
+                    if (property.text.includes('Pay')) {
+                        player.money -= 100;
+                        this.addLog(`${player.name} paid $100`);
+                    }
+                } else if (property.type === 'corner') {
+                    if (player.position === 0) {
+                        player.money += 200;
+                        this.addLog(`${player.name} collected $200 for landing on START!`);
+                    }
+                }
+                
+                document.getElementById('end-turn-btn').style.display = 'block';
+            }
+
+            calculateRent(propertyIndex) {
+                const property = properties[propertyIndex];
+                if (property.type === 'utility') {
+                    return 50;
+                }
+                const servers = property.servers || 0;
+                return property.rent[servers];
+            }
+
+            buyProperty() {
+                const player = this.players[this.currentPlayer];
+                const property = properties[player.position];
+                
+                if (player.money >= property.price) {
+                    player.money -= property.price;
+                    property.owner = this.currentPlayer;
+                    property.servers = 0;
+                    player.properties.push(player.position);
+                    
+                    this.addLog(`${player.name} purchased ${property.name} for $${property.price}`);
+                    document.querySelector(`[data-index="${player.position}"]`).classList.add('property-owned');
+                    document.getElementById('buy-btn').style.display = 'none';
+                    this.updateUI();
+                } else {
+                    this.addLog(`${player.name} doesn't have enough money!`);
+                }
+            }
+
+            upgradeProperty() {
+                const player = this.players[this.currentPlayer];
+                const property = properties[player.position];
+                const cost = 200;
+                
+                if (player.money >= cost && property.servers < 5) {
+                    player.money -= cost;
+                    property.servers = (property.servers || 0) + 1;
+                    
+                    const serverNames = ['Rack', '2 Racks', '3 Racks', '4 Racks', 'Full Cluster'];
+                    this.addLog(`${player.name} added servers to ${property.name} (${serverNames[property.servers - 1]})`);
+                    
+                    const serverDisplay = document.querySelector(`[data-index="${player.position}"] .server-count`);
+                    if (serverDisplay) {
+                        serverDisplay.textContent = ' 🖥'.repeat(property.servers);
+                    }
+                    
+                    if (property.servers >= 5) {
+                        document.getElementById('upgrade-btn').style.display = 'none';
+                    }
+                    this.updateUI();
+                } else {
+                    this.addLog(`Cannot upgrade: ${player.money < cost ? 'Not enough money' : 'Fully upgraded'}`);
+                }
+            }
+
+            endTurn() {
+                this.currentPlayer = (this.currentPlayer + 1) % this.players.length;
+                this.hasRolled = false;
+                
+                document.getElementById('buy-btn').style.display = 'none';
+                document.getElementById('upgrade-btn').style.display = 'none';
+                document.getElementById('end-turn-btn').style.display = 'none';
+                
+                this.addLog(`--- ${this.players[this.currentPlayer].name}'s turn ---`);
+                this.updateUI();
+            }
+
+            showPropertyInfo(index) {
+                const property = properties[index];
+                let info = `<strong>${property.name}</strong><br><br>`;
+                
+                if (property.price) {
+                    info += `Price: $${property.price}<br>`;
+                    if (property.rent) {
+                        info += `<br>Rent:<br>`;
+                        info += `Base: $${property.rent[0]}<br>`;
+                        info += `1 Rack: $${property.rent[1]}<br>`;
+                        info += `2 Racks: $${property.rent[2]}<br>`;
+                        info += `3 Racks: $${property.rent[3]}<br>`;
+                        info += `4 Racks: $${property.rent[4]}<br>`;
+                        info += `Full Cluster: $${property.rent[5]}<br>`;
+                    }
+                    if (property.owner !== undefined) {
+                        info += `<br>Owner: ${this.players[property.owner].name}<br>`;
+                        info += `Servers: ${property.servers || 0}<br>`;
+                    } else {
+                        info += `<br>Status: Available for purchase<br>`;
+                    }
+                }
+                
+                document.getElementById('modal-title').innerHTML = 'Data Center Info';
+                document.getElementById('modal-text').innerHTML = info;
+                document.getElementById('property-modal').classList.add('active');
+            }
+
+            addLog(message) {
+                this.gameLog.unshift(message);
+                if (this.gameLog.length > 20) this.gameLog.pop();
+                
+                const logEl = document.getElementById('game-log');
+                logEl.innerHTML = this.gameLog.map(msg => 
+                    `<div class="log-entry">${msg}</div>`
+                ).join('');
+            }
+
+            updateUI() {
+                const playersInfo = document.getElementById('players-info');
+                playersInfo.innerHTML = this.players.map((player, i) => `
+                    <div class="player-info ${i === this.currentPlayer ? 'current' : ''}">
+                        <div class="player-name" style="color: ${player.color};">${player.name}</div>
+                        <div class="player-money">💰 Balance: $${player.money}</div>
+                        <div class="player-money">📍 Position: ${properties[player.position].name}</div>
+                        <div class="player-properties">Properties: ${player.properties.length}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('roll-btn').disabled = this.hasRolled;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('property-modal').classList.remove('active');
+        }
+
+        // Initialize game
+        const game = new Game();
+        
+        document.getElementById('roll-btn').onclick = () => game.rollDice();
+        document.getElementById('buy-btn').onclick = () => game.buyProperty();
+        document.getElementById('upgrade-btn').onclick = () => game.upgradeProperty();
+        document.getElementById('end-turn-btn').onclick = () => game.endTurn();
+        
+        game.addLog('Game started! Player 1 begins.');
+    </script>
+</body>
+</html>
