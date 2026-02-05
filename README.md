@@ -2,7 +2,7 @@
 
 A browser-based Monopoly game themed entirely around data centers, cloud infrastructure, and tech operations.
 
-![Game Preview](screenshot.png)
+![Game Preview](image.png)
 
 ## 🎮 Play Now
 
